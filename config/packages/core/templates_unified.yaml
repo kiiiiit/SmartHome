@@ -1,0 +1,105 @@
+# Template сенсоры с правильными ссылками на константы
+template:
+  - sensor:
+      - name: "Comfort Temperature"
+        state: >
+          {% set outdoor = states('sensor.pok005_temperature') | float(15) %}
+          {% set base_temp = states('input_number.comfort_base_temperature') | float(21) %}
+          {% set offset = states('input_number.comfort_temperature_offset') | float(0) %}
+          {% set freeze_protection = states('input_number.freeze_protection_temperature') | float(10) %}
+          {% if outdoor > 15 %}
+            {{ (base_temp - 1 + offset) | round(1) }}
+          {% elif outdoor > 0 %}
+            {{ (base_temp + offset) | round(1) }}
+          {% elif outdoor > -10 %}
+            {{ (base_temp + 1 + offset) | round(1) }}
+          {% elif outdoor > -20 %}
+            {{ (base_temp + 2 + offset) | round(1) }}
+          {% else %}
+            {{ freeze_protection }}
+          {% endif %}
+        unit_of_measurement: "°C"
+        device_class: temperature
+        icon: mdi:thermometer-auto
+
+      - name: "Home Average Temperature"
+        unique_id: home_average_temperature
+        state: >
+          {% set sensors = [
+            'sensor.vvo_smart_life_temperature',
+            'sensor.sonoff_snzb_02d_temperature'
+          ] %}
+          {% set temps = sensors | map('states') | map('float', 'unknown') | reject('==', 'unknown') | list %}
+          {{ (temps | sum / temps | count) | round(1) if temps else 'unknown' }}
+        unit_of_measurement: "°C"
+        device_class: temperature
+        icon: mdi:home-thermometer-outline
+
+      - name: "Home Average Humidity"
+        state: >
+          {% set hums = [
+            states('sensor.sonoff_snzb_02d_humidity') | float(nan),
+            states('sensor.vvo_smart_life_humidity') | float(nan)
+          ] | select('is_number') | list %}
+          {% if hums %}
+            {{ (hums | sum / hums | length) | round(1) }}
+          {% else %}
+            unavailable
+          {% endif %}
+        unit_of_measurement: "%"
+        device_class: humidity
+        icon: mdi:water-percent
+
+      - name: "Heating Status"
+        state: >
+          {% if is_state('binary_sensor.boiler_flame_status', 'on') %}
+            Горит ({{ states('sensor.boiler_modulation') }}%)
+          {% elif is_state('binary_sensor.boiler_ch_enabled', 'on') %}
+            Готов к работе
+          {% elif is_state('climate.baxi_boiler', 'heat') %}
+            Включен ({{ state_attr('climate.baxi_boiler', 'temperature') }}°C)
+          {% else %}
+            Выключен
+          {% endif %}
+        icon: >
+          {% if is_state('binary_sensor.boiler_flame_status', 'on') %}
+            mdi:fire
+          {% elif is_state('climate.baxi_boiler', 'heat') %}
+            mdi:radiator
+          {% else %}
+            mdi:radiator-off
+          {% endif %}
+
+      - name: "HomeKit Main Temperature"
+        unique_id: homekit_main_temperature
+        state: "{{ states(states('input_select.temperature_source')) }}"
+        unit_of_measurement: "°C"
+        device_class: temperature
+        availability: "{{ states(states('input_select.temperature_source')) not in ['unknown', 'unavailable'] }}"
+        icon: mdi:home-thermometer
+
+  - binary_sensor:
+      - name: "Anyone Home"
+        state: >
+          {{ is_state('binary_sensor.sonoff_snzb_06p_occupancy', 'on') or
+             is_state('device_tracker.iphone_user1', 'home') or # Убедитесь, что entity_id правильный
+             is_state('input_boolean.manual_presence', 'on') }}
+        device_class: occupancy
+        icon: mdi:home-account
+
+      - name: "Low Battery Alert"
+        state: >
+          {% set threshold = states('input_number.low_battery_threshold') | int(20) %}
+          {% set batteries = expand(states.group.all_battery_sensors) | map(attribute='state') | map('float', 100) | list %}
+          {{ batteries | select('<', threshold) | list | count > 0 }}
+        device_class: battery_alert # Изменил на правильный device_class
+        icon: mdi:battery-alert-variant-outline
+
+      - name: "Comfortable Humidity"
+        state: >
+          {% set humidity = states('sensor.home_average_humidity') | float(50) %}
+          {% set min_val = states('input_number.comfortable_humidity_min_threshold') | int(40) %}
+          {% set max_val = states('input_number.comfortable_humidity_max_threshold') | int(60) %}
+          {{ humidity >= min_val and humidity <= max_val }}
+        device_class: humidity # Это состояние, а не проблема
+        icon: mdi:water-check

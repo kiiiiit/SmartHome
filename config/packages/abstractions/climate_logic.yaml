@@ -1,0 +1,103 @@
+# Базовые климатические логики (Single Responsibility)
+automation:
+  # Единый контроллер температуры (вместо дублирования)
+  - alias: "Climate - Universal Temperature Controller"
+    description: "Универсальный контроллер климата"
+    trigger:
+      - platform: state
+        entity_id: 
+          - sensor.pok005_temperature
+          - sensor.home_average_temperature
+          - binary_sensor.anyone_home
+          - input_boolean.homekit_home_mode
+          - input_boolean.homekit_away_mode
+          - input_boolean.homekit_sleep_mode
+      - platform: time_pattern
+        minutes: "/30"
+    variables:
+      outdoor_temp: "{{ states('sensor.pok005_temperature') | float(-999) }}"
+      indoor_temp: "{{ states('sensor.home_average_temperature') | float(20) }}"
+      is_home: "{{ is_state('binary_sensor.anyone_home', 'on') }}"
+      current_hour: "{{ now().hour }}"
+      is_night: "{{ current_hour >= 23 or current_hour < 6 }}"
+      # Интеллектуальное определение режима
+      target_mode: >
+        {% if is_state('input_boolean.homekit_away_mode', 'on') %}
+          away
+        {% elif is_state('input_boolean.homekit_sleep_mode', 'on') or is_night %}
+          night
+        {% elif outdoor_temp < -15 %}
+          freeze_protection
+        {% elif not is_home %}
+          away
+        {% else %}
+          comfort
+        {% endif %}
+    condition:
+      - condition: template
+        value_template: "{{ outdoor_temp != -999 }}"  # Валидация данных
+    action:
+      - service: script.smart_set_temperature
+        data:
+          mode: "{{ target_mode }}"
+
+# Специализированные контроллеры (Single Responsibility)
+automation:
+  # Энергооптимизация (отдельная ответственность)
+  - alias: "Climate - Energy Optimization"
+    description: "Оптимизация энергопотребления"
+    trigger:
+      - platform: state
+        entity_id: sensor.boiler_modulation
+      - platform: numeric_state
+        entity_id: sensor.boiler_modulation
+        above: "{{ states('homeassistant.customize_glob.*threshold_constants*.high_modulation') | int }}"
+        for: "00:10:00"
+    action:
+      - service: script.send_climate_notification
+        data:
+          title: "⚡ Энергооптимизация"
+          message: "Высокая модуляция {{ states('sensor.boiler_modulation') }}%. Рекомендуется снижение температуры."
+      - service: script.smart_set_temperature
+        data:
+          mode: economy
+
+  # Защита системы (отдельная ответственность)  
+  - alias: "Climate - System Protection"
+    description: "Защита системы отопления"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.pok005_temperature
+        below: "{{ states('homeassistant.customize_glob.*threshold_constants*.extreme_cold') | int }}"
+      - platform: state
+        entity_id: binary_sensor.boiler_fault
+        to: 'on'
+      - platform: numeric_state
+        entity_id: sensor.home_average_humidity
+        above: "{{ states('homeassistant.customize_glob.*threshold_constants*.high_humidity') | int }}"
+        for: "01:00:00"
+    action:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.pok005_temperature  
+                below: "{{ states('homeassistant.customize_glob.*threshold_constants*.extreme_cold') | int }}"
+            sequence:
+              - service: script.smart_set_temperature
+                data:
+                  mode: freeze_protection
+              - service: script.send_climate_notification
+                data:
+                  title: "🥶 Защита от замерзания"
+                  message: "Активирован режим защиты от замерзания"
+                  priority: high
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.boiler_fault
+                state: 'on'
+            sequence:
+              - service: script.send_climate_notification
+                data:
+                  title: "⚠️ Неисправность котла"
+                  message: "Обнаружена неисправность котла BAXI"
+                  priority: high

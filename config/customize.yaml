@@ -1,0 +1,95 @@
+# Этот файл теперь пуст. Вся кастомизация перенесена в пакеты.
+# Оставлен для совместимости или будущих глобальных настроек.
+homeassistant:
+  customize: {}
+
+# Кастомизация сущностей
+homeassistant:
+  customize:
+    # Котел
+    climate.baxi_boiler:
+      friendly_name: "Котел BAXI"
+      icon: mdi:radiator
+
+    sensor.boiler_temperature:
+      friendly_name: "Температура котла"
+      icon: mdi:thermometer
+
+    sensor.boiler_modulation:
+      friendly_name: "Модуляция котла"
+      icon: mdi:percent
+
+    # Датчики движения
+    binary_sensor.living_room_motion:
+      friendly_name: "Движение в гостиной"
+      icon: mdi:motion-sensor
+
+    binary_sensor.bedroom_motion:
+      friendly_name: "Движение в спальне"
+      icon: mdi:motion-sensor
+
+    # Датчики температуры
+    sensor.living_room_temperature:
+      friendly_name: "Температура в гостиной"
+
+    sensor.bedroom_temperature:
+      friendly_name: "Температура в спальне"
+
+    # SONOFF SNZB-06P - датчик присутствия
+    binary_sensor.sonoff_snzb_06p_occupancy:
+      friendly_name: "Датчик присутствия SONOFF"
+      device_class: occupancy
+      icon: mdi:motion-sensor
+
+    sensor.sonoff_snzb_06p_battery:
+      friendly_name: "Заряд датчика присутствия"
+      device_class: battery
+      icon: mdi:battery
+
+    # SONOFF SNZB-02D - датчик температуры/влажности
+    sensor.sonoff_snzb_02d_temperature:
+      friendly_name: "Температура SONOFF"
+      device_class: temperature
+      icon: mdi:thermometer
+
+    sensor.sonoff_snzb_02d_humidity:
+      friendly_name: "Влажность SONOFF"
+      device_class: humidity
+      icon: mdi:water-percent
+
+    sensor.sonoff_snzb_02d_battery:
+      friendly_name: "Заряд датчика SONOFF"
+      device_class: battery
+      icon: mdi:battery
+
+    # POK005 - внешний датчик
+    sensor.pok005_temperature:
+      friendly_name: "Уличная температура"
+      device_class: temperature
+      icon: mdi:thermometer
+
+    sensor.pok005_humidity:
+      friendly_name: "Уличная влажность"
+      device_class: humidity
+      icon: mdi:water-percent
+
+    sensor.pok005_battery:
+      friendly_name: "Заряд уличного датчика"
+      device_class: battery
+      icon: mdi:battery
+
+    # VVO Smart Life 3 - внутренний датчик
+    sensor.vvo_smart_life_temperature:
+      friendly_name: "Температура гостиной"
+      device_class: temperature
+      icon: mdi:thermometer
+
+    sensor.vvo_smart_life_humidity:
+      friendly_name: "Влажность гостиной"
+      device_class: humidity
+      icon: mdi:water-percent
+
+    sensor.vvo_smart_life_battery:
+      friendly_name: "Заряд датчика гостиной"
+      device_class: battery
+      icon: mdi:battery

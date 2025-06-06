@@ -1,0 +1,123 @@
+# ZHA Zigbee конфигурация - ВСЕ УСТРОЙСТВА
+zha:
+  enable_quirks: true
+  zigpy_config:
+    ota:
+      ikea_provider: true
+      ledvance_provider: true
+      salus_provider: true
+      inovelli_provider: true
+      thirdreality_provider: true
+      sonoff_provider: true
+    network:
+      channels: [15, 20, 25, 26]  # Избегаем канал 11 (конфликт с Wi-Fi)
+      extended_pan_id: "0x1234567890abcdef"
+      pan_id: 0x1234
+      network_key: "01:03:05:07:09:0b:0d:0f:00:02:04:06:08:0a:0c:0e"
+      tc_link_key: "5a:69:67:42:65:65:41:6c:6c:69:61:6e:63:65:30:39"
+
+# Группы всех Zigbee устройств
+group:
+  all_sonoff_devices:
+    name: "SONOFF устройства"
+    entities:
+      - binary_sensor.sonoff_snzb_06p_occupancy
+      - sensor.sonoff_snzb_02d_temperature
+      - sensor.sonoff_snzb_02d_humidity
+      - sensor.sonoff_snzb_06p_battery
+      - sensor.sonoff_snzb_02d_battery
+
+  all_temperature_sensors:
+    name: "Все датчики температуры"
+    entities:
+      - sensor.sonoff_snzb_02d_temperature
+      - sensor.pok005_temperature
+      - sensor.vvo_smart_life_temperature
+      - sensor.boiler_feed_temperature
+      - sensor.boiler_return_temperature
+
+  all_humidity_sensors:
+    name: "Все датчики влажности"
+    entities:
+      - sensor.sonoff_snzb_02d_humidity
+      - sensor.pok005_humidity
+      - sensor.vvo_smart_life_humidity
+
+  all_battery_sensors:
+    name: "Все датчики заряда"
+    entities:
+      - sensor.sonoff_snzb_06p_battery
+      - sensor.sonoff_snzb_02d_battery
+      - sensor.pok005_battery
+      - sensor.vvo_smart_life_battery
+
+  outdoor_sensors:
+    name: "Уличные датчики"
+    entities:
+      - sensor.pok005_temperature
+      - sensor.pok005_humidity
+      - sensor.pok005_battery
+
+  indoor_sensors:
+    name: "Внутренние датчики"
+    entities:
+      - sensor.sonoff_snzb_02d_temperature
+      - sensor.sonoff_snzb_02d_humidity
+      - sensor.vvo_smart_life_temperature
+      - sensor.vvo_smart_life_humidity
+
+  motion_sensors:
+    name: "Датчики движения"
+    entities:
+      - binary_sensor.sonoff_snzb_06p_occupancy
+
+homeassistant:
+  customize:
+    # SONOFF SNZB-06P - датчик присутствия
+    binary_sensor.sonoff_snzb_06p_occupancy:
+      friendly_name: "Датчик присутствия SONOFF"
+      device_class: occupancy
+      icon: mdi:motion-sensor
+    sensor.sonoff_snzb_06p_battery:
+      friendly_name: "Заряд датчика присутствия"
+      device_class: battery
+      icon: mdi:battery
+    # SONOFF SNZB-02D - датчик температуры/влажности
+    sensor.sonoff_snzb_02d_temperature:
+      friendly_name: "Температура SONOFF"
+      device_class: temperature
+      icon: mdi:thermometer
+    sensor.sonoff_snzb_02d_humidity:
+      friendly_name: "Влажность SONOFF"
+      device_class: humidity
+      icon: mdi:water-percent
+    sensor.sonoff_snzb_02d_battery:
+      friendly_name: "Заряд датчика SONOFF"
+      device_class: battery
+      icon: mdi:battery
+    # POK005 - внешний датчик
+    sensor.pok005_temperature:
+      friendly_name: "Уличная температура"
+      device_class: temperature
+      icon: mdi:thermometer
+    sensor.pok005_humidity:
+      friendly_name: "Уличная влажность"
+      device_class: humidity
+      icon: mdi:water-percent
+    sensor.pok005_battery:
+      friendly_name: "Заряд уличного датчика"
+      device_class: battery
+      icon: mdi:battery
+    # VVO Smart Life 3 - внутренний датчик
+    sensor.vvo_smart_life_temperature:
+      friendly_name: "Температура гостиной"
+      device_class: temperature
+      icon: mdi:thermometer
+    sensor.vvo_smart_life_humidity:
+      friendly_name: "Влажность гостиной"
+      device_class: humidity
+      icon: mdi:water-percent
+    sensor.vvo_smart_life_battery:
+      friendly_name: "Заряд датчика гостиной"
+      device_class: battery
+      icon: mdi:battery

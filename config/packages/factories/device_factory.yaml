@@ -1,0 +1,62 @@
+# Factory для создания device-specific автоматизаций (Open/Closed)
+script:
+  # Фабрика Apple устройств
+  create_apple_device_automation:
+    alias: "Создать автоматизацию Apple устройства"
+    fields:
+      device_type:
+        description: "Тип устройства: iphone/watch/tv/macbook"
+      device_entity:
+        description: "Entity ID устройства"
+      automation_type:
+        description: "Тип автоматизации: presence/battery/activity"
+    sequence:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ device_type == 'iphone' and automation_type == 'battery' }}"
+            sequence:
+              - condition: numeric_state
+                entity_id: "{{ device_entity }}_battery_level"
+                below: "{{ states('homeassistant.customize_glob.*threshold_constants*.low_battery') | int }}"
+              - service: script.smart_set_temperature
+                data:
+                  mode: economy
+          - conditions:
+              - condition: template
+                value_template: "{{ device_type == 'watch' and automation_type == 'activity' }}"
+            sequence:
+              - condition: numeric_state
+                entity_id: "{{ device_entity }}_heart_rate"
+                above: 100
+              - condition: numeric_state
+                entity_id: sensor.home_average_temperature
+                above: 25
+              - service: script.smart_set_temperature
+                data:
+                  mode: comfort
+
+  # Фабрика Zigbee устройств
+  create_zigbee_device_automation:
+    alias: "Создать автоматизацию Zigbee устройства"
+    fields:
+      device_type:
+        description: "Тип: sensor/switch/binary_sensor"
+      device_entity:
+        description: "Entity ID"
+      automation_type:
+        description: "battery/offline/reading"
+    sequence:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ automation_type == 'battery' }}"
+            sequence:
+              - condition: numeric_state
+                entity_id: "{{ device_entity }}_battery"
+                below: "{{ states('homeassistant.customize_glob.*threshold_constants*.low_battery') | int }}"
+              - service: script.send_climate_notification
+                data:
+                  title: "🔋 Низкий заряд"
+                  message: "{{ state_attr(device_entity, 'friendly_name') }}: {{ states(device_entity + '_battery') }}%"
+                  

@@ -1,0 +1,178 @@
+# Apple TV (если есть)
+apple_tv:
+  - host: !secret apple_tv_ip # Используем секрет
+    login_id: !secret apple_tv_login_id
+    name: "Apple TV" # Укоротил имя, будет climate.apple_tv
+
+# AirPlay (если есть)
+media_player:
+  - platform: airplay
+    host: !secret airplay_ip # Используем секрет
+    name: "Mood Player"
+
+# Shell commands (для MacBook)
+shell_command:
+  macbook_sleep: "ssh !secret macbook_user@!secret macbook_ip 'pmset sleepnow'"
+  macbook_wake: "ssh !secret macbook_user@!secret macbook_ip 'caffeinate -u -t 1'"
+
+# ИСПРАВЛЕННАЯ версия unified_apple_devices.yaml
+automation:
+  - alias: "iPhone - Unified Control"
+    description: "Единое управление по iPhone"
+    trigger:
+      - platform: state
+        entity_id: device_tracker.iphone_user1
+        to: 'home'
+      - platform: state
+        entity_id: device_tracker.iphone_user1
+        to: 'not_home'
+        for: "00:15:00"
+      - platform: zone
+        entity_id: device_tracker.iphone_user1
+        zone: zone.approaching_home
+        event: enter
+      - platform: state
+        entity_id: binary_sensor.low_battery_alert
+        to: 'on'
+    variables:
+      trigger_entity: "{{ trigger.entity_id }}"
+      action_type: >
+        {% if trigger_entity == 'device_tracker.iphone_user1' and trigger.to_state.state == 'home' %}
+          arriving
+        {% elif trigger_entity == 'device_tracker.iphone_user1' and trigger.to_state.state == 'not_home' %}
+          leaving
+        {% elif trigger_entity == 'device_tracker.iphone_user1' and trigger.zone is defined and 'approaching_home' in trigger.zone %}
+          approaching
+        {% elif 'low_battery' in trigger_entity %}
+          low_battery
+        {% endif %}
+    action:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ action_type == 'arriving' }}"
+            sequence:
+              - service: script.activate_homekit_mode
+                data:
+                  mode: home
+              - service: notify.mobile_app_iphone_user1
+                data:
+                  title: "🏠 Добро пожаловать домой!"
+                  message: "Температура дома: {{ states('sensor.home_average_temperature') }}°C"
+          - conditions:
+              - condition: template
+                value_template: "{{ action_type == 'leaving' }}"
+            sequence:
+              - service: script.activate_homekit_mode
+                data:
+                  mode: away
+              - service: notify.mobile_app_iphone_user1
+                data:
+                  title: "👋 До свидания!"
+                  message: "Дом переведен в режим отсутствия"
+          - conditions:
+              - condition: template
+                value_template: "{{ action_type == 'approaching' }}"
+            sequence:
+              - service: script.smart_set_temperature
+                data:
+                  mode: comfort
+                  offset: 1
+          - conditions:
+              - condition: template
+                value_template: "{{ action_type == 'low_battery' }}"
+            sequence:
+              - service: script.send_climate_notification
+                data:
+                  title: "🔋 Низкий заряд Apple"
+                  message: "Низкий заряд на одном из устройств Apple. Проверьте."
+                  mobile: true
+
+  # Apple Watch здоровье
+  - alias: "Apple Watch - Health Climate Control"
+    description: "Климат-контроль на основе здоровья"
+    trigger:
+      - platform: state
+        entity_id: sensor.apple_watch_heart_rate
+        to: 'sleeping'
+      - platform: numeric_state
+        entity_id: sensor.apple_watch_heart_rate
+        above: 100
+    condition:
+      - condition: state
+        entity_id: device_tracker.iphone_user1
+        state: 'home'
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.apple_watch_heart_rate
+                state: 'sleeping'
+            sequence:
+              - service: script.activate_homekit_mode
+                data:
+                  mode: sleep
+          - conditions:
+              - condition: numeric_state
+                entity_id: sensor.apple_watch_heart_rate
+                above: 100
+              - condition: numeric_state
+                entity_id: sensor.home_average_temperature
+                above: 25
+            sequence:
+              - service: script.smart_set_temperature
+                data:
+                  mode: comfort
+                  offset: -2
+              - service: script.send_climate_notification
+                data:
+                  title: "🏥 Контроль здоровья"
+                  message: "Снижена температура в доме. Пульс: {{ states('sensor.apple_watch_heart_rate') }}"
+                  mobile: true
+
+  # Apple устройства активность
+  - alias: "Apple Devices - Activity Based Climate"
+    description: "Климат на основе активности Apple устройств"
+    trigger:
+      - platform: state
+        entity_id: media_player.apple_tv
+        to: 'playing'
+      - platform: state
+        entity_id: media_player.mood_player
+        to: 'playing'
+      - platform: time
+        at: "02:00:00"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.anyone_home
+        state: 'on'
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: media_player.apple_tv
+                state: 'playing'
+              - condition: time
+                after: "22:00:00"
+                before: "06:00:00"
+            sequence:
+              - service: script.activate_homekit_mode
+                data:
+                  mode: sleep
+          - conditions:
+              - condition: state
+                entity_id: media_player.mood_player
+                state: 'playing'
+            sequence:
+              - service: script.smart_set_temperature
+                data:
+                  mode: comfort
+                  offset: 1
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.platform == 'time' }}"
+              - condition: state
+                entity_id: binary_sensor.anyone_home
+                state: 'off'
+            sequence:
+              - service: shell_command.macbook_sleep

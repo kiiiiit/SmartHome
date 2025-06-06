@@ -1,0 +1,96 @@
+# КРИТИЧЕСКИ ВАЖНЫЙ файл с сервисами
+script:
+  smart_set_temperature:
+    alias: "Умная установка температуры"
+    fields:
+      mode:
+        description: "comfort/economy/away/night/max/freeze_protection/guest"
+        required: true
+      offset:
+        description: "Смещение температуры"
+        default: 0
+    variables:
+      base_temp: "{{ states('input_number.comfort_base_temperature') | float(21) }}"
+      mode_temps:
+        comfort: "{{ base_temp + states('input_number.comfort_temperature_offset') | float(0) }}"
+        economy: "{{ states('input_number.economy_temperature') | float(18) }}"
+        away: "{{ states('input_number.away_temperature') | float(16) }}"
+        night: "{{ states('input_number.night_temperature') | float(19) }}"
+        guest: "{{ base_temp + 1 }}" # Гости = комфорт + 1
+        max: "{{ states('input_number.maximum_heat_temperature') | float(24) }}"
+        freeze_protection: "{{ states('input_number.freeze_protection_temperature') | float(25) }}"
+      target_temp: "{{ mode_temps[mode] | default(base_temp) + (offset | float(0)) }}"
+    sequence:
+      - condition: template
+        value_template: "{{ target_temp | float >= 15 and target_temp | float <= 28 }}" # Расширенный диапазон
+      - service: climate.set_temperature
+        target:
+          entity_id: climate.baxi_boiler
+        data:
+          temperature: "{{ target_temp }}"
+      - service: logbook.log
+        data:
+          name: "Управление климатом"
+          message: "Установлена температура {{ target_temp }}°C (Режим: {{ mode }}{% if offset != 0 %}, смещение: {{offset}}{% endif %})"
+
+  activate_homekit_mode:
+    alias: "Активировать режим Apple Home"
+    fields:
+      mode:
+        description: "home/sleep/away/guest"
+        required: true
+    variables:
+      mode_to_climate:
+        home: comfort
+        sleep: night
+        away: away
+        guest: guest
+    sequence:
+      - service: homeassistant.turn_off
+        target:
+          entity_id:
+            - input_boolean.homekit_home_mode
+            - input_boolean.homekit_sleep_mode
+            - input_boolean.homekit_away_mode
+            - input_boolean.homekit_guest_mode
+      - service: homeassistant.turn_on
+        target:
+          entity_id: "input_boolean.homekit_{{ mode }}_mode"
+      - service: script.smart_set_temperature
+        data:
+          mode: "{{ mode_to_climate[mode] }}"
+
+  send_climate_notification:
+    alias: "Отправить климатическое уведомление"
+    fields:
+      title:
+        description: "Заголовок"
+        required: true
+      message:
+        description: "Сообщение"
+        required: true
+      priority:
+        description: "normal/high"
+        default: "normal"
+      mobile:
+        description: "Отправить на телефон"
+        default: true # По умолчанию отправляем на телефон
+    sequence:
+      - service: persistent_notification.create
+        data:
+          title: "{{ title }}"
+          message: "{{ message }}"
+          notification_id: "climate_alert_{{ now().timestamp() | int }}"
+      - if:
+          - condition: template
+            value_template: "{{ mobile }}" # Убрали проверку priority, отправляем всегда
+        then:
+          - service: notify.mobile_app_iphone_user1 # Замените на ваш реальный сервис
+            data:
+              title: "{{ title }}"
+              message: "{{ message }}"
+              data: # Добавляем данные для интерактивных уведомлений, если нужно
+                push:
+                  sound: default
+                  badge: 0 # или {{ states('sensor.notification_badge_count') }}
+                  category: "climate_alert" # Для группировки и действий

@@ -1,0 +1,60 @@
+# Оптимизированная конфигурация HomeKit (УБРАНЫ input_boolean и input_number)
+homekit:
+  - name: "Умный дом"
+    port: 21063
+    advertise_ip: !secret internal_ip # Убедитесь, что internal_ip есть в secrets.yaml
+    filter:
+      include_domains:
+        - climate
+        - binary_sensor
+        - sensor
+        - switch
+        - camera
+        - input_boolean # Включаем все input_boolean для HomeKit
+        - input_number  # Включаем все input_number для HomeKit
+        - input_select  # Включаем input_select
+      exclude_entity_globs:
+        - "sensor.*_linkquality"
+        - "sensor.*_rssi"
+        - "binary_sensor.*_update_available"
+      include_entity_globs:
+        - "sensor.*temperature*"
+        - "sensor.*humidity*"
+        - "sensor.*battery*"
+        - "binary_sensor.*motion*"
+        - "binary_sensor.*occupancy*"
+        - "sensor.boiler_*"
+        - "binary_sensor.boiler_*"
+        - "input_boolean.homekit_*" # Только те, что для HomeKit
+        - "input_number.*temperature*" # Все температурные инпуты
+    entity_config:
+      # Климат
+      climate.baxi_boiler:
+        name: "Отопление"
+        
+      # Источники температуры для HomeKit
+      sensor.homekit_main_temperature:
+        name: "Комнатная температура"
+
+      # Переключатели HomeKit (имена уже заданы в input_boolean)
+      input_boolean.homekit_home_mode: {} # Пустой блок, если имя уже устраивает
+      input_boolean.homekit_sleep_mode: {}
+      input_boolean.homekit_away_mode: {}
+      input_boolean.homekit_guest_mode: {}
+        
+      # Камера
+      camera.sonoff_cam_slim_gen2:
+        name: "Камера в гостиной"
+        support_audio: false
+
+      # Важные сенсоры
+      binary_sensor.anyone_home:
+        name: "Присутствие дома"
+      sensor.home_average_temperature:
+        name: "Средняя темп. дома"
+      sensor.pok005_temperature:
+        name: "Температура на улице"
+      binary_sensor.low_battery_alert:
+        name: "Низкий заряд батарей"
+      input_number.homekit_target_temperature: # Конкретная настройка для этого инпута
+        name: "Желаемая температура"

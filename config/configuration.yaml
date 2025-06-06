@@ -1,0 +1,89 @@
+# Основная конфигурация Home Assistant
+default_config:
+
+homeassistant:
+  packages: !include_dir_named packages
+  name: "Умный дом"
+  latitude: !secret latitude
+  longitude: !secret longitude
+  elevation: !secret elevation
+  unit_system: metric
+  time_zone: Europe/Moscow
+  external_url: !secret external_url
+  internal_url: !secret internal_url
+
+# Секция автоматизаций (ПУСТАЯ, все в packages)
+automation: []
+
+# Секция скриптов (ПУСТАЯ, все в packages)
+script: {} # Или !include scripts.yaml, если есть UI-скрипты
+
+# Секция сцен (ПУСТАЯ, если все в packages)
+scene: {} # Или !include scenes.yaml, если есть UI-сцены
+
+# Логирование
+logger:
+  default: warning
+  logs:
+    homeassistant.components.homekit: info
+    homeassistant.components.zha: info
+    homeassistant.components.mqtt: info
+    homeassistant.components.automation: info # Добавил для отладки
+    pyhap: warning
+
+# История с оптимизацией
+recorder:
+  db_url: sqlite:///config/home-assistant_v2.db
+  purge_keep_days: 30
+  auto_purge: true
+  include:
+    domains:
+      - climate
+      - binary_sensor
+      - sensor
+      - switch
+      - camera
+      - automation
+      - scene
+      - input_boolean # Добавил
+      - input_number  # Добавил
+      - input_select  # Добавил
+    entity_globs:
+      - "sensor.*_temperature"
+      - "sensor.*_humidity"
+      - "sensor.*_battery"
+      - "binary_sensor.*_motion"
+      - "binary_sensor.boiler_*"
+  exclude:
+    entity_globs:
+      - "sensor.*_linkquality"
+      - "sensor.sun_*" # Часто обновляется, много данных
+      - "sensor.*_rssi"
+
+# HTTP компонент
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1
+    - ::1
+
+# Необходимые для Apple интеграций
+mobile_app: # Для работы notify.mobile_app_iphone_user1
+
+zone:
+  - name: Home
+    latitude: !secret latitude
+    longitude: !secret longitude
+    radius: 100 # Радиус домашней зоны
+    icon: mdi:home
+  - name: Approaching Home
+    latitude: !secret latitude # Те же координаты
+    longitude: !secret longitude
+    radius: 500 # Больший радиус для "приближения"
+    icon: mdi:home-import-outline
+
+# iCloud (если используется для device_tracker)
+icloud:
+  username: !secret icloud_username
+  password: !secret icloud_password
+  with_family: true # Раскомментируйте, если нужно отслеживать всех членов семьи

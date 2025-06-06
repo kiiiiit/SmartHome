@@ -1,0 +1,15 @@
+# Автоматизации для котла
+automation:
+  - alias: "Boiler - Update Outdoor Temperature"
+    description: "Передача температуры от POK005 в OpenTherm"
+    trigger:
+      - platform: state
+        entity_id: sensor.pok005_temperature
+    condition:
+      - condition: template
+        value_template: "{{ states('sensor.pok005_temperature') not in ['unavailable', 'unknown'] }}"
+    action:
+      - service: mqtt.publish
+        data:
+          topic: "opentherm/sensors/outdoor_temperature"
+          payload: "{{ states('sensor.pok005_temperature') }}" 

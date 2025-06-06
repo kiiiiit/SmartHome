@@ -1,0 +1,221 @@
+## Настройка ESP32-C6 для MQTT - Пошаговое руководство
+
+Исходя из поисковых результатов, ваш **OpenTherm 2.2 ESP32-C6** скорее всего имеет прошивку **live-control**. Рассмотрю все варианты настройки.
+
+### **🔍 1. Определите текущую прошивку ESP32-C6**
+
+**Проверьте веб-интерфейс:**
+```bash
+# Найдите IP адрес ESP32-C6 в роутере или сканером
+nmap -sn 192.168.0.0/24
+
+# Откройте в браузере
+http://192.168.0.XXX
+```
+
+**Возможные варианты прошивок:**
+- **live-control** (заводская от Sprut.AI)
+- **OTGateway** (от Laxilef) 
+- **Custom OpenTherm** (самописная)
+
+### **🛠️ 2. Настройка для прошивки live-control**
+
+**Если у вас live-control (наиболее вероятно):**
+
+**Войдите в веб-интерфейс ESP32-C6:**
+1. **Откройте браузер:** `http://IP_АДРЕС_ESP32`
+2. **Найдите раздел:** "MQTT Settings" или "Настройки MQTT"
+3. **Настройте параметры:**
+
+```yaml
+# Параметры MQTT в live-control:
+MQTT Broker: 192.168.0.100    # IP вашего Home Assistant
+MQTT Port: 1883
+MQTT User: homeassistant       # Из secrets.yaml
+MQTT Password: your_mqtt_password
+Client ID: opentherm_esp32c6
+Base Topic: opentherm          # Базовый топик
+```
+
+**Топики, которые будет публиковать ESP32-C6:**
+```bash
+# Сенсоры (должны совпадать с вашим boiler.yaml):
+opentherm/sensors/feed_temperature
+opentherm/sensors/return_temperature  
+opentherm/sensors/dhw_temperature
+opentherm/sensors/outdoor_temperature
+opentherm/sensors/pressure
+opentherm/sensors/modulation
+
+# Binary сенсоры:
+opentherm/binary_sensors/flame_status
+opentherm/binary_sensors/ch_enabled
+opentherm/binary_sensors/dhw_enabled
+opentherm/binary_sensors/fault
+
+# Команды (подписка):
+opentherm/thermostat/setpoint/set
+opentherm/thermostat/mode/set
+```
+
+### **🔧 3. Настройка для OTGateway (если перепрошили)**
+
+**Если используете OTGateway от Laxilef:**
+
+**Откройте веб-интерфейс OTGateway:**
+```yaml
+# В разделе MQTT Settings:
+MQTT Server: 192.168.0.100
+MQTT Port: 1883  
+MQTT User: homeassistant
+MQTT Password: your_password
+Device Name: baxi_boiler
+Discovery Prefix: homeassistant
+```
+
+**OTGateway автоматически создаст discovery сообщения для HA.**
+
+### **🐍 4. Настройка для custom прошивки**
+
+**Если у вас самописная прошивка, проверьте код:**
+
+**Основные параметры в коде:**
+```cpp
+// Из поисковых результатов - пример настроек:
+const char* mqtt_server = "192.168.0.100";    // IP Home Assistant
+const char* mqtt_user = "homeassistant";      
+const char* mqtt_password = "your_password";
+const int mqtt_port = 1883;
+
+// MQTT топики (должны совпадать с boiler.yaml):
+const char* TEMP_BOILER_GET_TOPIC = "opentherm/sensors/feed_temperature";
+const char* TEMP_SETPOINT_SET_TOPIC = "opentherm/thermostat/setpoint/set";
+const char* MODE_SET_TOPIC = "opentherm/thermostat/mode/set";
+```
+
+### **📋 5. Проверьте соответствие топиков**
+
+**Сравните топики в вашем boiler.yaml с ESP32-C6:**
+
+**В boiler.yaml у вас есть:**
+```yaml
+# Сенсоры:
+state_topic: "opentherm/sensors/feed_temperature"
+state_topic: "opentherm/sensors/return_temperature"
+state_topic: "opentherm/sensors/pressure"
+state_topic: "opentherm/sensors/modulation"
+
+# Binary сенсоры:
+state_topic: "opentherm/binary_sensors/flame_status"
+state_topic: "opentherm/binary_sensors/ch_enabled"
+state_topic: "opentherm/binary_sensors/fault"
+
+# Команды:
+temperature_command_topic: "opentherm/thermostat/setpoint/set"
+mode_command_topic: "opentherm/thermostat/mode/set"
+```
+
+**ESP32-C6 должен публиковать в эти же топики!**
+
+### **🔍 6. Проверка работы MQTT**
+
+**Используйте MQTT Explorer для диагностики:**
+
+```bash
+# Подключитесь к MQTT брокеру HA:
+Host: 192.168.0.100
+Port: 1883
+Username: homeassistant
+Password: your_password
+
+# Подпишитесь на все топики OpenTherm:
+opentherm/#
+
+# Проверьте, что ESP32-C6 публикует данные
+```
+
+**Или через Home Assistant Developer Tools:**
+```yaml
+# Services > MQTT > Listen to topic
+Topic: opentherm/#
+```
+
+### **⚙️ 7. Настройка внешней температуры (POK005)**
+
+**Для передачи температуры от POK005 в ESP32-C6:**
+
+**Через автоматизацию в HA (из вашего boiler.yaml):**
+```yaml
+automation:
+  - alias: "Boiler - Update Outdoor Temperature"
+    trigger:
+      - platform: state
+        entity_id: sensor.pok005_temperature
+    action:
+      - service: mqtt.publish
+        data:
+          topic: "opentherm/sensors/outdoor_temperature"
+          payload: "{{ states('sensor.pok005_temperature') }}"
+```
+
+**Или настройте ESP32-C6 на подписку:**
+```bash
+# ESP32-C6 подписывается на:
+zigbee2mqtt/POK005/temperature
+# И ретранслирует в:
+opentherm/sensors/outdoor_temperature
+```
+
+### **🚀 8. Команды для проверки**
+
+```bash
+# 1. Найдите IP ESP32-C6
+nmap -sn 192.168.0.0/24 | grep -B2 "ESP32\|OpenTherm"
+
+# 2. Проверьте веб-интерфейс
+curl -I http://IP_ESP32:80
+
+# 3. Проверьте MQTT подключение в логах HA
+ha core logs | grep mqtt
+
+# 4. Тестируйте отправку команд
+# Developer Tools > Services > MQTT Publish
+# Topic: opentherm/thermostat/setpoint/set
+# Payload: 21
+```
+
+### **📊 9. Диагностика проблем**
+
+**Если ESP32-C6 не подключается к MQTT:**
+
+1. **Проверьте сетевые настройки**
+2. **Убедитесь, что Mosquitto broker запущен в HA**
+3. **Проверьте логи ESP32-C6 через Serial Monitor**
+4. **Попробуйте другой MQTT клиент для тестирования**
+
+**Если топики не совпадают:**
+
+1. **Измените базовый топик в ESP32-C6**
+2. **Или обновите boiler.yaml под текущие топики**
+3. **Перезапустите Home Assistant**
+
+### **✅ Результат правильной настройки**
+
+После корректной настройки в Home Assistant появятся:
+- `climate.baxi_boiler` - управление котлом
+- `sensor.boiler_feed_temperature` - температура подачи
+- `sensor.boiler_modulation` - модуляция
+- `binary_sensor.boiler_flame_status` - статус горелки
+
+**Какую прошивку показывает веб-интерфейс вашего ESP32-C6?** Это поможет дать более точные инструкции по настройке.
+
+[1] https://docs.espressif.com/projects/esp-at/en/latest/esp32c6/AT_Command_Examples/MQTT_AT_Examples.html
+[2] https://www.instructables.com/Smart-IoT-Sensor-Built-With-XIAO-ESP32C6-WiFi-MQTT/
+[3] https://community.home-assistant.io/t/mqtt-opentherm-controller-need-help-adapting-code/314031
+[4] https://sprut.ai/catalog/item/termostat-opentherm-2-2-wi-fi-6-zigbee
+[5] https://forum.baxi.ru/viewtopic.php?t=9256
+[6] https://community.alexgyver.ru/threads/opensource-opentherm-kontroller-termostat-dlja-upravlenija-otopleniem.12660/
+[7] https://habr.com/ru/articles/759964/
+[8] https://www.ozon.ru/product/termostat-opentherm-2-2-na-chipe-esp-32-c6-wi-fi-zigbee-korpus-na-din-reyku-dlya-podklyucheniya-po-1366519343/reviews/
+[9] https://www.youtube.com/watch?v=iZtRADLuE4c
+[10] https://www.reddit.com/r/esp32/comments/1g2ms0e/esp32c6_wifi_sensor_for_home_assistant/

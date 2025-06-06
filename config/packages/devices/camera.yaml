@@ -1,0 +1,22 @@
+# SONOFF CAM Slim Gen2
+camera:
+  - platform: generic
+    name: "SONOFF CAM Slim Gen2"
+    still_image_url: "http://!secret camera_ip/snapshot.jpg"
+    stream_source: "rtsp://!secret camera_username:!secret camera_password@!secret camera_ip/stream1"
+    username: !secret camera_username
+    password: !secret camera_password
+    authentication: basic
+    verify_ssl: false
+    framerate: 15
+    scan_interval: 10
+
+# Дополнительные сенсоры камеры (если поддерживается)
+binary_sensor:
+  - platform: rest
+    name: "Camera Motion Detection"
+    resource: "http://!secret camera_ip/api/motion"
+    headers:
+      Authorization: !secret camera_auth
+    device_class: motion
+    scan_interval: 5

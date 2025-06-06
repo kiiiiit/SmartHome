@@ -1,0 +1,89 @@
+# Котел BAXI с внешней температурой от POK005
+climate:
+  - platform: opentherm_gw
+    name: "BAXI Boiler"
+    gateway_id: 0
+    precision: 0.5
+    room_temperature: sensor.home_average_temperature  # Средняя по дому
+
+# MQTT сенсоры OpenTherm с внешней температурой
+mqtt:
+  sensor:
+    # Температуры котла
+    - name: "Boiler Feed Temperature"
+      state_topic: "opentherm/sensors/feed_temperature"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      icon: mdi:thermometer-chevron-up
+
+    - name: "Boiler Return Temperature"
+      state_topic: "opentherm/sensors/return_temperature"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      icon: mdi:thermometer-chevron-down
+
+    - name: "DHW Temperature"
+      state_topic: "opentherm/sensors/dhw_temperature"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      icon: mdi:water-thermometer
+
+    # Используем POK005 как источник внешней температуры
+    - name: "Boiler Outdoor Temperature"
+      state_topic: "opentherm/sensors/outdoor_temperature"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      icon: mdi:thermometer
+      # Здесь можно настроить получение данных от POK005 через MQTT
+
+    # Диагностика
+    - name: "Boiler Pressure"
+      state_topic: "opentherm/sensors/pressure"
+      unit_of_measurement: "bar"
+      device_class: pressure
+      icon: mdi:gauge
+
+    - name: "Boiler Modulation"
+      state_topic: "opentherm/sensors/modulation"
+      unit_of_measurement: "%"
+      icon: mdi:percent
+
+  binary_sensor:
+    # Статусы
+    - name: "Boiler Flame Status"
+      state_topic: "opentherm/binary_sensors/flame_status"
+      payload_on: "true"
+      payload_off: "false"
+      device_class: heat
+      icon: mdi:fire
+
+    - name: "Boiler CH Enabled"
+      state_topic: "opentherm/binary_sensors/ch_enabled"
+      payload_on: "true"
+      payload_off: "false"
+      icon: mdi:radiator
+
+    - name: "Boiler DHW Enabled"
+      state_topic: "opentherm/binary_sensors/dhw_enabled"
+      payload_on: "true"
+      payload_off: "false"
+      icon: mdi:water-boiler
+
+    - name: "Boiler Fault"
+      state_topic: "opentherm/binary_sensors/fault"
+      payload_on: "true"
+      payload_off: "false"
+      device_class: problem
+      icon: mdi:alert-circle
+
+homeassistant:
+  customize:
+    climate.baxi_boiler:
+      friendly_name: "Котел BAXI"
+      icon: mdi:radiator
+    sensor.boiler_temperature:
+      friendly_name: "Температура котла"
+      icon: mdi:thermometer
+    sensor.boiler_modulation:
+      friendly_name: "Модуляция котла"
+      icon: mdi:percent

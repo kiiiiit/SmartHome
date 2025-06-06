@@ -1,0 +1,76 @@
+# Чистый интерфейс для Apple Home (Interface Segregation)
+automation:
+  # Единый обработчик Apple Home режимов
+  - alias: "Apple Home - Mode Handler"
+    description: "Обработчик режимов Apple Home"
+    trigger:
+      - platform: state
+        entity_id:
+          - input_boolean.homekit_home_mode
+          - input_boolean.homekit_sleep_mode
+          - input_boolean.homekit_away_mode
+          - input_boolean.homekit_guest_mode
+        to: 'on'
+    variables:
+      triggered_mode: "{{ trigger.entity_id.split('.')[-1].replace('homekit_', '').replace('_mode', '') }}"
+      mode_mapping:
+        home: comfort
+        sleep: night
+        away: away
+        guest: comfort
+    action:
+      # Выключить остальные режимы (mutex logic)
+      - service: homeassistant.turn_off
+        target:
+          entity_id:
+            - input_boolean.homekit_home_mode
+            - input_boolean.homekit_sleep_mode
+            - input_boolean.homekit_away_mode
+            - input_boolean.homekit_guest_mode
+      # Включить обратно триггерный режим
+      - service: homeassistant.turn_on
+        target:
+          entity_id: "{{ trigger.entity_id }}"
+      # Применить соответствующий климатический режим
+      - service: script.smart_set_temperature
+        data:
+          mode: "{{ mode_mapping[triggered_mode] }}"
+
+# Apple устройства (отдельная ответственность)
+automation:
+  # iPhone автоматизации
+  - alias: "iPhone - Location Based Control"
+    description: "Управление по геолокации iPhone"
+    trigger:
+      - platform: state
+        entity_id: device_tracker.iphone_user1
+        to: 'home'
+      - platform: state
+        entity_id: device_tracker.iphone_user1
+        to: 'not_home'
+        for: "00:15:00"
+      - platform: zone
+        entity_id: device_tracker.iphone_user1
+        zone: zone.approaching_home
+        event: enter
+    variables:
+      location_mode_map:
+        home: comfort
+        not_home: away
+        approaching_home: comfort
+      target_mode: "{{ location_mode_map.get(trigger.to_state.state, 'comfort') }}"
+    action:
+      - service: script.smart_set_temperature
+        data:
+          mode: "{{ target_mode }}"
+      - service: notify.mobile_app_iphone_user1
+        data:
+          title: "🏠 Умный дом"
+          message: >
+            {% if trigger.to_state.state == 'home' %}
+              Добро пожаловать домой! Температура: {{ states('sensor.home_average_temperature') }}°C
+            {% elif trigger.to_state.state == 'not_home' %}
+              Дом переведен в режим отсутствия
+            {% else %}
+              Подготавливаем дом к вашему приезду
+            {% endif %}
