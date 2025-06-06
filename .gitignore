@@ -1,0 +1,16 @@
+# Home Assistant
+home-assistant.log
+home-assistant_v2.db
+secrets.yaml
+
+# Python
+__pycache__/
+*.pyc
+deps/
+
+# macOS
+.DS_Store
+
+# IDE / Editor
+.idea/
+.vscode/ 
