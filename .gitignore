@@ -14,3 +14,7 @@ deps/
 # IDE / Editor
 .idea/
 .vscode/ 
+
+# Shell scripts
+scripts/
+*.sh
