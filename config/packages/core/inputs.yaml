@@ -6,7 +6,7 @@ input_boolean:
     name: "Ручное управление присутствием"
     icon: mdi:account-switch
   guest_mode_active:
-    name: "Гостевой режим"
+    name: "Системный: Гостевой режим"
     icon: mdi:account-multiple-plus
   homekit_home_mode:
     name: "Дома (HomeKit)"
@@ -18,13 +18,13 @@ input_boolean:
     name: "Отъезд (HomeKit)"
     icon: mdi:home-export-outline
   homekit_guest_mode:
-    name: "Гостевой режим (HomeKit)"
+    name: "Гостевой режим (переключатель HomeKit)"
     icon: mdi:account-multiple-plus
 
 input_number:
   # --- Температуры режимов ---
   comfort_base_temperature:
-    name: "Комфортная температура (база)"
+    name: "Уставка: Комфорт (база)"
     min: 18
     max: 25
     step: 0.5
@@ -32,7 +32,7 @@ input_number:
     unit_of_measurement: "°C"
     icon: mdi:thermometer-lines
   comfort_temperature_offset:
-    name: "Смещение комфортной температуры"
+    name: "Уставка: Смещение комфорта"
     min: -2
     max: 2
     step: 0.5
@@ -40,7 +40,7 @@ input_number:
     unit_of_measurement: "°C"
     icon: mdi:tune-variant
   economy_temperature:
-    name: "Экономичная температура (уставка)"
+    name: "Уставка: Эконом"
     min: 16
     max: 20
     step: 0.5
@@ -48,7 +48,7 @@ input_number:
     unit_of_measurement: "°C"
     icon: mdi:leaf
   away_temperature:
-    name: "Температура при отсутствии (уставка)"
+    name: "Уставка: Отсутствие"
     min: 14
     max: 18
     step: 0.5
@@ -56,7 +56,7 @@ input_number:
     unit_of_measurement: "°C"
     icon: mdi:home-export-outline
   night_temperature:
-    name: "Ночная температура (уставка)"
+    name: "Уставка: Ночь"
     min: 17
     max: 21
     step: 0.5
@@ -64,7 +64,7 @@ input_number:
     unit_of_measurement: "°C"
     icon: mdi:weather-night
   maximum_heat_temperature:
-    name: "Максимальная температура прогрева (уставка)"
+    name: "Уставка: Макс. прогрев"
     min: 22
     max: 28
     step: 0.5
@@ -72,7 +72,7 @@ input_number:
     unit_of_measurement: "°C"
     icon: mdi:fire-circle
   freeze_protection_temperature:
-    name: "Температура антизамерзания (уставка)"
+    name: "Уставка: Антизамерзание"
     min: 5
     max: 15
     step: 0.5
@@ -80,7 +80,7 @@ input_number:
     unit_of_measurement: "°C"
     icon: mdi:snowflake-thermometer
   homekit_target_temperature:
-    name: "Целевая температура (HomeKit)"
+    name: "Уставка: Целевая (HomeKit)"
     min: 16
     max: 25
     step: 0.5
@@ -90,7 +90,7 @@ input_number:
 
   # --- Пороговые значения ---
   low_battery_threshold:
-    name: "Порог низкого заряда батареи"
+    name: "Порог: Низкий заряд"
     min: 10
     max: 30
     step: 1
@@ -98,7 +98,7 @@ input_number:
     unit_of_measurement: "%"
     icon: mdi:battery-alert-variant-outline
   high_humidity_threshold:
-    name: "Порог высокой влажности"
+    name: "Порог: Высокая влажность"
     min: 60
     max: 80
     step: 1
@@ -106,21 +106,21 @@ input_number:
     unit_of_measurement: "%"
     icon: mdi:water-alert
   comfortable_humidity_min_threshold:
-    name: "Мин. комфортная влажность"
+    name: "Порог: Мин. комфортная влажность"
     min: 30
     max: 50
     step: 1
     initial: 40
     unit_of_measurement: "%"
   comfortable_humidity_max_threshold:
-    name: "Макс. комфортная влажность"
+    name: "Порог: Макс. комфортная влажность"
     min: 50
     max: 70
     step: 1
     initial: 60
     unit_of_measurement: "%"
   high_modulation_threshold:
-    name: "Порог высокой модуляции котла"
+    name: "Порог: Высокая модуляция котла"
     min: 75
     max: 95
     step: 1
@@ -128,7 +128,7 @@ input_number:
     unit_of_measurement: "%"
     icon: mdi:chart-line-variant
   extreme_cold_threshold:
-    name: "Порог экстремального холода"
+    name: "Порог: Экстремальный холод"
     min: -30
     max: -10
     step: 1
