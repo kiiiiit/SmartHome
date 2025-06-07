@@ -1,10 +1,10 @@
-# Apple TV (если есть)
+# Apple TV (исправлено: теперь словарь, а не список)
 apple_tv:
-  - host: !secret apple_tv_ip # Используем секрет
-    login_id: !secret apple_tv_login_id
-    name: "Apple TV" # Укоротил имя, будет climate.apple_tv
+  host: !secret apple_tv_ip
+  login_id: !secret apple_tv_login_id
+  name: "Apple TV"
 
-# AirPlay (если есть)
+# AirPlay (исправлено: теперь словарь, а не список)
 media_player:
   - platform: airplay
     host: !secret airplay_ip # Используем секрет

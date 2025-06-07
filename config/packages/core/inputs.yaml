@@ -1,6 +1,13 @@
-# Все input_boolean и input_number здесь
+# Этот файл является ЕДИНСТВЕННЫМ источником для всех input_* хелперов.
+# Все остальные файлы с input_boolean, input_number, input_select были объединены сюда.
+
 input_boolean:
-  # Для HomeKit
+  manual_presence:
+    name: "Ручное управление присутствием"
+    icon: mdi:account-switch
+  guest_mode_active:
+    name: "Гостевой режим активен"
+    icon: mdi:account-multiple-plus
   homekit_home_mode:
     name: "Дома (HomeKit)"
     icon: mdi:home
@@ -14,16 +21,8 @@ input_boolean:
     name: "Гости (HomeKit)"
     icon: mdi:account-multiple-plus
 
-  # Общие хелперы
-  manual_presence:
-    name: "Ручное управление присутствием"
-    icon: mdi:account-switch
-  guest_mode_active: # Общий гостевой режим
-    name: "Гостевой режим активен"
-    icon: mdi:account-group
-
 input_number:
-  # ТЕМПЕРАТУРЫ РЕЖИМОВ
+  # --- Температуры режимов ---
   comfort_base_temperature:
     name: "Базовая комфортная температура"
     min: 18
@@ -80,8 +79,16 @@ input_number:
     initial: 10
     unit_of_measurement: "°C"
     icon: mdi:snowflake-thermometer
+  homekit_target_temperature:
+    name: "Целевая температура (HomeKit)"
+    min: 16
+    max: 25
+    step: 0.5
+    unit_of_measurement: "°C"
+    icon: mdi:thermometer
+    initial: 21
 
-  # ПОРОГОВЫЕ ЗНАЧЕНИЯ
+  # --- Пороговые значения ---
   low_battery_threshold:
     name: "Порог низкого заряда батареи"
     min: 10
@@ -129,21 +136,18 @@ input_number:
     unit_of_measurement: "°C"
     icon: mdi:snowflake-alert
 
-  # Для HomeKit
-  homekit_target_temperature:
-    name: "Целевая температура (HomeKit)"
-    min: 16
-    max: 25
-    step: 0.5
-    unit_of_measurement: "°C"
-    icon: mdi:thermometer
-    initial: 21
-
 input_select:
+  primary_thermostat:
+    name: "Основной термостат"
+    options:
+      - climate.baxi_boiler
+    initial: climate.baxi_boiler
+    icon: mdi:radiator
   temperature_source:
-    name: "Источник температуры"
+    name: "Источник комнатной температуры"
     options:
       - sensor.home_average_temperature
-      - sensor.vvo_smart_life_temperature
       - sensor.sonoff_snzb_02d_temperature
-    initial: sensor.home_average_temperature 
+      - sensor.vvo_smart_life_temperature
+    initial: sensor.home_average_temperature
+    icon: mdi:thermometer-lines 

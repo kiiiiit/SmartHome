@@ -1,16 +1,14 @@
-# КРИТИЧЕСКИ ВАЖНЫЙ файл с сервисами
+# Этот файл является ЕДИНСТВЕННЫМ источником для всех скриптов.
+# Все остальные файлы со скриптами были объединены сюда.
 script:
   smart_set_temperature:
     alias: "Умная установка температуры"
     fields:
       mode:
         description: "comfort/economy/away/night/max/freeze_protection/guest"
-        example: "comfort"
         required: true
       offset:
         description: "Смещение температуры"
-        example: 0
-        required: false
         default: 0
     variables:
       base_temp: "{{ states('input_number.comfort_base_temperature') | float(21) }}"
@@ -19,10 +17,10 @@ script:
         economy: "{{ states('input_number.economy_temperature') | float(18) }}"
         away: "{{ states('input_number.away_temperature') | float(16) }}"
         night: "{{ states('input_number.night_temperature') | float(19) }}"
-        guest: "{{ base_temp + 1 }}" # Гости = комфорт + 1
+        guest: "{{ base_temp + 1 }}"
         max: "{{ states('input_number.maximum_heat_temperature') | float(24) }}"
         freeze_protection: "{{ states('input_number.freeze_protection_temperature') | float(10) }}"
-      target_temp: "{{ (mode_temps[mode] | default(base_temp)) + (offset | float(0)) }}"
+      target_temp: "{{ mode_temps[mode] | default(base_temp) + (offset | float(0)) }}"
     sequence:
       - condition: template
         value_template: "{{ target_temp | float >= 5 and target_temp | float <= 30 }}" # Валидация
@@ -41,17 +39,14 @@ script:
     fields:
       mode:
         description: "home/sleep/away/guest"
-        example: "home"
         required: true
     variables:
       mode_to_climate:
         home: comfort
         sleep: night
         away: away
-        guest: comfort
-      entity_id: "input_boolean.homekit_{{ mode }}_mode"
+        guest: guest
     sequence:
-      # Выключаем все режимы, кроме активируемого (mutex)
       - service: input_boolean.turn_off
         target:
           entity_id:
@@ -59,11 +54,9 @@ script:
             - input_boolean.homekit_sleep_mode
             - input_boolean.homekit_away_mode
             - input_boolean.homekit_guest_mode
-      # Включаем нужный режим
       - service: input_boolean.turn_on
         target:
-          entity_id: "{{ entity_id }}"
-      # Вызываем основной скрипт установки температуры
+          entity_id: "input_boolean.homekit_{{ mode }}_mode"
       - service: script.smart_set_temperature
         data:
           mode: "{{ mode_to_climate[mode] }}"
@@ -96,4 +89,32 @@ script:
               message: "{{ message }}"
               data:
                 push:
-                  sound: default 
+                  sound: default
+
+  set_heating_comfort:
+    alias: "Set Heating Comfort"
+    sequence:
+      - service: script.smart_set_temperature
+        data:
+          mode: comfort
+
+  set_heating_economy:
+    alias: "Set Heating Economy"
+    sequence:
+      - service: script.smart_set_temperature
+        data:
+          mode: economy
+
+  set_heating_away:
+    alias: "Set Heating Away"
+    sequence:
+      - service: script.smart_set_temperature
+        data:
+          mode: away
+
+  set_heating_sleep:
+    alias: "Set Heating Sleep"
+    sequence:
+      - service: script.smart_set_temperature
+        data:
+          mode: night 

@@ -1,14 +1,13 @@
-# MQTT конфигурация
-mqtt:
-  broker: localhost
-  port: 1883
-  username: !secret mqtt_username
-  password: !secret mqtt_password
-  discovery: true
-  discovery_prefix: homeassistant
-  birth_message:
-    topic: "homeassistant/status"
-    payload: "online"
-  will_message:
-    topic: "homeassistant/status"
-    payload: "offline"
+# Этот файл предназначен для MQTT сущностей (сенсоров, бинарных сенсоров и т.д.)
+# Конфигурация самого брокера MQTT (адрес, порт, логин, пароль)
+# должна быть выполнена через ИНТЕРФЕЙС Home Assistant.
+# (Настройки -> Устройства и службы -> Добавить интеграцию -> MQTT)
+
+# Пример MQTT сенсора (сейчас закомментирован)
+# mqtt:
+#   sensor:
+#     - name: "Пример MQTT Сенсора"
+#       state_topic: "home/living_room/temperature"
+
+# Пустой файл, так как все MQTT устройства (котел) уже определены
+# в своих пакетах (`boiler.yaml`).
