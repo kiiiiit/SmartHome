@@ -6,7 +6,7 @@ input_boolean:
     name: "Ручное управление присутствием"
     icon: mdi:account-switch
   guest_mode_active:
-    name: "Гостевой режим активен"
+    name: "Гостевой режим"
     icon: mdi:account-multiple-plus
   homekit_home_mode:
     name: "Дома (HomeKit)"
@@ -18,13 +18,13 @@ input_boolean:
     name: "Отъезд (HomeKit)"
     icon: mdi:home-export-outline
   homekit_guest_mode:
-    name: "Гости (HomeKit)"
+    name: "Гостевой режим (HomeKit)"
     icon: mdi:account-multiple-plus
 
 input_number:
   # --- Температуры режимов ---
   comfort_base_temperature:
-    name: "Базовая комфортная температура"
+    name: "Комфортная температура (база)"
     min: 18
     max: 25
     step: 0.5
@@ -40,7 +40,7 @@ input_number:
     unit_of_measurement: "°C"
     icon: mdi:tune-variant
   economy_temperature:
-    name: "Экономичная температура"
+    name: "Экономичная температура (уставка)"
     min: 16
     max: 20
     step: 0.5
@@ -48,7 +48,7 @@ input_number:
     unit_of_measurement: "°C"
     icon: mdi:leaf
   away_temperature:
-    name: "Температура при отсутствии"
+    name: "Температура при отсутствии (уставка)"
     min: 14
     max: 18
     step: 0.5
@@ -56,7 +56,7 @@ input_number:
     unit_of_measurement: "°C"
     icon: mdi:home-export-outline
   night_temperature:
-    name: "Ночная температура"
+    name: "Ночная температура (уставка)"
     min: 17
     max: 21
     step: 0.5
@@ -64,7 +64,7 @@ input_number:
     unit_of_measurement: "°C"
     icon: mdi:weather-night
   maximum_heat_temperature:
-    name: "Максимальная температура прогрева"
+    name: "Максимальная температура прогрева (уставка)"
     min: 22
     max: 28
     step: 0.5
@@ -72,7 +72,7 @@ input_number:
     unit_of_measurement: "°C"
     icon: mdi:fire-circle
   freeze_protection_temperature:
-    name: "Температура защиты от замерзания"
+    name: "Температура антизамерзания (уставка)"
     min: 5
     max: 15
     step: 0.5
